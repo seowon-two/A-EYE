@@ -2,8 +2,8 @@
 
 ## OCR Model
 
--EasyOCR
--PaddleOCR 2.7.3
+- EasyOCR
+- PaddleOCR 2.7.3
 
 Language: Korean
 
