@@ -292,86 +292,87 @@ def show_input_screen():
     st.subheader("약품 이미지 입력")
     st.write("카메라로 약품을 촬영하거나 이미지 파일을 업로드하세요.")
 
-    camera_image = st.camera_input("📸 약품 촬영")
-    st.caption("사진을 다시 찍으려면 Clear photo를 누른 뒤 다시 촬영해주세요.")
+    # 전체 입력 영역을 가운데 정렬
+    left_space, input_area, right_space = st.columns([0.3, 3.4, 0.3])
 
-    uploaded_file = st.file_uploader(
-        "이미지 파일 업로드",
-        type=["jpg", "jpeg", "png"],
-    )
+    with input_area:
+        camera_image = st.camera_input("📸 약품 촬영")
 
-    selected_image = camera_image or uploaded_file
-
-    if selected_image is not None:
-        image = Image.open(selected_image)
-        st.session_state.uploaded_image = image
-        st.image(image, caption="입력된 약품 이미지", use_container_width=True)
-
-    st.info(
-        "촬영 팁: 약품명과 복용법이 잘 보이도록 정면에서 촬영하고, "
-        "빛 반사와 흔들림을 피해주세요."
-    )
-
-    if st.button("분석 시작하기", use_container_width=True):
-        if st.session_state.uploaded_image is None:
-            st.warning("먼저 약품 이미지를 촬영하거나 업로드해주세요.")
-        else:
-            st.session_state.state = "loading"
-            st.rerun()
-
-# 2. 분석 진행 화면
-def show_loading_screen():
-    left, right = st.columns([1, 1.2], gap="large")
-
-    with left:
         st.markdown(
             """
-            <div class="section-card">
-                <div class="section-title">업로드된 이미지</div>
-                <div class="section-desc">현재 분석 중인 약품 이미지입니다.</div>
+            <div style='color:#D32F2F; font-size:14px; font-weight:600; margin-top:6px; margin-bottom:18px;'>
+                사진을 다시 찍으려면 Clear photo를 누른 뒤 다시 촬영해주세요.
+            </div>
             """,
             unsafe_allow_html=True,
         )
 
-        if st.session_state.uploaded_image is not None:
+        uploaded_file = st.file_uploader(
+            "이미지 파일 업로드",
+            type=["jpg", "jpeg", "png"],
+        )
+
+        selected_image = camera_image or uploaded_file
+
+        if selected_image is not None:
+            image = Image.open(selected_image)
+            st.session_state.uploaded_image = image
+
             st.image(
-                st.session_state.uploaded_image,
-                caption="분석 대상 이미지",
+                image,
+                caption="입력된 약품 이미지",
                 use_container_width=True,
             )
 
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    with right:
-        st.markdown(
-            """
-            <div class="section-card">
-                <div class="section-title">AI 분석 진행 중</div>
-                <div class="section-desc">
-                    YOLOv8, Crop, EasyOCR, DB 매칭 단계를 순차적으로 수행합니다.
-                </div>
-            """,
-            unsafe_allow_html=True,
+        st.info(
+            "촬영 팁: 약품명과 복용법이 잘 보이도록 정면에서 촬영하고, "
+            "빛 반사와 흔들림을 피해주세요."
         )
 
+        if st.button("분석 시작하기", use_container_width=True):
+            if st.session_state.uploaded_image is None:
+                st.warning("먼저 약품 이미지를 촬영하거나 업로드해주세요.")
+            else:
+                st.session_state.state = "loading"
+                st.rerun()
+
+# 2. 분석 진행 화면
+def show_loading_screen():
+    st.subheader("약품 정보 확인 중")
+    st.write("약품명과 복용 정보를 확인할 준비가 되었습니다.")
+
+    if st.session_state.uploaded_image is not None:
+        st.image(
+            st.session_state.uploaded_image,
+            caption="분석 대상 이미지",
+            width=420,
+        )
+
+    st.info("아래 버튼을 누르면 약품 정보 분석을 시작합니다.")
+
+    if st.button("약품 정보 분석 실행", use_container_width=True):
         progress = st.progress(0)
-        status = st.empty()
+        status_text = st.empty()
 
         steps = [
-            "YOLOv8 객체 탐지 중...",
-            "약품 영역 Crop 생성 중...",
-            "EasyOCR 문자 인식 중...",
-            "OCR 결과 정제 및 DB 매칭 중...",
-            "음성 안내 문장 생성 중...",
+            "약품 사진을 확인하고 있습니다...",
+            "약품명을 인식하고 있습니다...",
+            "복용 정보를 찾고 있습니다...",
+            "주의사항을 확인하고 있습니다...",
+            "음성 안내를 준비하고 있습니다...",
         ]
 
         for i, step in enumerate(steps):
-            status.info(step)
+            status_text.info(step)
             progress.progress((i + 1) / len(steps))
-            time.sleep(0.5)
+            time.sleep(0.8)
 
         result = run_ai_pipeline(st.session_state.uploaded_image)
         st.session_state.result = result
+
+        status_text.success("분석이 완료되었습니다.")
+        progress.progress(1.0)
+        time.sleep(0.8)
 
         if result["status"] == "success":
             st.session_state.state = "success"
@@ -379,9 +380,6 @@ def show_loading_screen():
             st.session_state.state = "fail"
 
         st.rerun()
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
 
 # 3. 분석 결과 / 음성 안내 화면
 def show_success_screen():
@@ -481,10 +479,7 @@ def show_success_screen():
                 reset_app()
                 st.rerun()
 
-
-# =========================
 # 상태 4. 인식 실패 / 복수 후보 화면
-# =========================
 def show_fail_screen():
     result = st.session_state.result
 
@@ -580,10 +575,7 @@ def show_fail_screen():
             if st.button("후보 선택 후 안내", use_container_width=True):
                 st.warning("실제 구현 시 선택한 후보의 복용법과 주의사항을 안내하도록 연결하세요.")
 
-
-# =========================
 # 메인 실행
-# =========================
 show_header()
 
 if st.session_state.state == "input":
