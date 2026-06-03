@@ -5,19 +5,14 @@ from difflib import SequenceMatcher
 import streamlit as st
 from PIL import Image
 
-
-# =========================
 # 기본 설정
-# =========================
 st.set_page_config(
     page_title="AI 비상약품 안내 서비스",
     page_icon="💊",
     layout="wide",
 )
 
-# =========================
-# CSS 스타일
-# =========================
+# CSS 
 st.markdown(
     """
     <style>
@@ -25,18 +20,12 @@ st.markdown(
         background-color: #F5F7FA;
     }
 
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-        max-width: 1200px;
-    }
-
     .header-card {
         background-color: white;
-        padding: 28px 34px;
-        border-radius: 20px;
+        padding: 24px 30px;
+        border-radius: 18px;
         border: 1px solid #DDE3EA;
-        margin-bottom: 24px;
+        margin-bottom: 10px;
     }
 
     .main-title {
@@ -122,24 +111,6 @@ st.markdown(
         color: #2E7D32;
     }
 
-    .flow-box {
-        background-color: white;
-        padding: 20px;
-        border-radius: 18px;
-        border: 1px solid #DDE3EA;
-        margin-top: 22px;
-    }
-
-    .flow-step {
-        background-color: #EBF3FC;
-        padding: 14px;
-        border-radius: 14px;
-        text-align: center;
-        font-weight: 700;
-        color: #1F4E79;
-        border: 1px solid #C8DAED;
-    }
-
     .tip {
         font-size: 14px;
         color: #667085;
@@ -149,15 +120,34 @@ st.markdown(
         border: 1px solid #E1E7EF;
         margin-top: 16px;
     }
+
+    header[data-testid="stHeader"] {
+        display: none;
+    }
+
+    #MainMenu {
+        visibility: hidden;
+    }
+
+    footer {
+        visibility: hidden;
+    }
+
+    [data-testid="stToolbar"] {
+        display: none;
+    }
+
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        max-width: 1000px;
+    }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-
-# =========================
 # 세션 상태 초기화
-# =========================
 if "state" not in st.session_state:
     # input / loading / success / fail
     st.session_state.state = "input"
@@ -169,9 +159,7 @@ if "result" not in st.session_state:
     st.session_state.result = None
 
 
-# =========================
-# 더미 약품 DB
-# =========================
+# 더미 약품 DB (나중에 삭제)
 MEDICINE_DB = {
     "tylenol": {
         "name_ko": "타이레놀",
@@ -193,10 +181,7 @@ MEDICINE_DB = {
     },
 }
 
-
-# =========================
 # 유틸 함수
-# =========================
 def clean_text(text: str) -> str:
     """
     OCR 결과 문자열을 정제하는 함수.
@@ -251,9 +236,7 @@ def run_ai_pipeline(image):
     # 분석 진행처럼 보이기 위한 대기
     time.sleep(1)
 
-    # =========================
     # TODO: 실제 연결 시 이 부분 교체
-    # =========================
     yolo_detected = True
     cropped_image = image
 
@@ -263,9 +246,7 @@ def run_ai_pipeline(image):
 
     cleaned_text, best, candidates = match_medicine(dummy_ocr_text)
 
-    # 실패 상황 테스트하고 싶으면 아래 값을 낮춰보면 됨
-    # ocr_confidence = 0.45
-
+    # 실패 상황 테스트시 ocr_confidence 값을 낮추면 됨 (ex. ocr_confidence = 0.45)
     if not yolo_detected or ocr_confidence < 0.6:
         return {
             "status": "fail",
@@ -297,24 +278,22 @@ def show_header():
     st.markdown(
         """
         <div class="header-card">
-            <div class="main-title">AI 비상약품 안내 서비스</div>
+            <div class="main-title">💊 A-EYE</div>
             <div class="sub-title">
-                약품 이미지를 업로드하거나 촬영하면 YOLOv8, EasyOCR 기반 분석을 통해 약품명, 복용법, 주의사항을 안내합니다.
+            약품 사진을 업로드하면 약 이름과 복용법, 주의사항을 음성으로 안내해드립니다.
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-
-# =========================
-# 상태 1. 메인 / 이미지 입력 화면
-# =========================
+# 1. 메인 / 이미지 입력 화면
 def show_input_screen():
     st.subheader("약품 이미지 입력")
     st.write("카메라로 약품을 촬영하거나 이미지 파일을 업로드하세요.")
 
-    camera_image = st.camera_input("카메라로 촬영하기")
+    camera_image = st.camera_input("📸 약품 촬영")
+    st.caption("사진을 다시 찍으려면 Clear photo를 누른 뒤 다시 촬영해주세요.")
 
     uploaded_file = st.file_uploader(
         "이미지 파일 업로드",
