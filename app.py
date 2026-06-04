@@ -40,56 +40,11 @@ st.markdown(
         color: #5B6778;
     }
 
-    .section-card {
-        background-color: white;
-        padding: 26px;
-        border-radius: 20px;
-        border: 1px solid #DDE3EA;
-        min-height: 520px;
-    }
-
-    .section-title {
-        font-size: 22px;
-        font-weight: 700;
-        color: #1F2937;
-        margin-bottom: 8px;
-    }
-
-    .section-desc {
-        font-size: 15px;
-        color: #667085;
-        margin-bottom: 18px;
-    }
-
     .result-card {
         background-color: #F9FBFD;
         padding: 18px 20px;
         border-radius: 16px;
         border: 1px solid #E1E7EF;
-        margin-bottom: 16px;
-    }
-
-    .success-card {
-        background-color: #EBF7EC;
-        padding: 18px 20px;
-        border-radius: 16px;
-        border: 1px solid #BFDCC4;
-        margin-bottom: 16px;
-    }
-
-    .warning-card {
-        background-color: #FFF8E1;
-        padding: 18px 20px;
-        border-radius: 16px;
-        border: 1px solid #E8D99B;
-        margin-bottom: 16px;
-    }
-
-    .error-card {
-        background-color: #FFEBEE;
-        padding: 18px 20px;
-        border-radius: 16px;
-        border: 1px solid #F0B8BE;
         margin-bottom: 16px;
     }
 
@@ -103,22 +58,6 @@ st.markdown(
         font-size: 22px;
         font-weight: 700;
         color: #1F2937;
-    }
-
-    .big-value {
-        font-size: 30px;
-        font-weight: 800;
-        color: #2E7D32;
-    }
-
-    .tip {
-        font-size: 14px;
-        color: #667085;
-        background-color: #F9FBFD;
-        padding: 14px 16px;
-        border-radius: 12px;
-        border: 1px solid #E1E7EF;
-        margin-top: 16px;
     }
 
     header[data-testid="stHeader"] {
@@ -259,8 +198,8 @@ def run_ai_pipeline(image):
     cropped_image = image
 
     # EasyOCR 결과라고 가정한 더미 텍스트
-    # 실패 상황 테스트시 ocr_confidence 값을 낮추면 됨 (ex. ocr_confidence = 0.45)
     dummy_ocr_text = "Ty1enol!!"
+    # 실패 화면 테스트 시 값을 0.6 미만으로 낮추면 됨
     ocr_confidence = 0.92
 
     cleaned_text, best, candidates = match_medicine(dummy_ocr_text)
@@ -358,7 +297,7 @@ def show_input_screen():
 
 # 2. 분석 진행 화면
 def show_loading_screen():
-    st.subheader("약품 정보 확인 중")
+    st.subheader("약품 정보 분석")
     st.write("약품명과 복용 정보를 확인할 준비가 되었습니다.")
 
     if st.session_state.uploaded_image is not None:
@@ -429,7 +368,7 @@ def show_success_screen():
 
             <div class="result-card">
                 <div class="label">확인한 약품명</div>
-                <div class="value">{result["cleaned_text"]}</div>
+                <div class="value">{medicine["name_ko"]}</div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -448,7 +387,7 @@ def show_success_screen():
         st.write("약품 이미지 분석을 통해 확인된 정보입니다.")
 
         st.success(f"인식된 약품: {medicine['name_ko']} / {medicine['name_en']}")
-        st.write(f"신뢰도: {confidence_percent}%")
+        st.write(f"정확도: {confidence_percent}%")
 
         st.markdown("### 복용법")
         st.info(medicine["dosage"])
@@ -512,21 +451,22 @@ def show_fail_screen():
         st.subheader("인식 실패 또는 복수 후보")
         st.write("약품명이 선명하게 인식되지 않았습니다. 아래 후보를 확인하거나 다시 촬영해주세요.")
 
-        st.error(f"약품 정보를 정확히 확인하지 못했습니다. 인식 정확도: {confidence_percent}%")
+        st.error(f"약품 정보를 정확히 확인하지 못했습니다.")
+        st.write(f"정확도: {confidence_percent}%")
 
         st.error("다시 촬영하거나 아래 후보 약품을 확인해주세요.")
 
         if result and result.get("candidates"):
             st.markdown("### 유사 약품 후보")
 
-        for candidate in result["candidates"]:
-            info = candidate["info"]
-            score = int(candidate["score"] * 100)
+            for candidate in result["candidates"]:
+                info = candidate["info"]
+                score = int(candidate["score"] * 100)
 
-            st.warning(
-                f"후보 약품: {info['name_ko']} / {info['name_en']}\n\n"
-                f"문자열 유사도: {score}%"
-            )
+                st.warning(
+                    f"후보 약품: {info['name_ko']} / {info['name_en']}\n\n"
+                    f"문자열 유사도: {score}%"
+                )
 
         col1, col2 = st.columns(2)
 
@@ -539,7 +479,7 @@ def show_fail_screen():
         # Web Speech API 또는 TTS 모듈과 연결하여 복용법과 주의사항을 음성으로 출력
         with col2:
             if st.button("후보 확인하기", use_container_width=True):
-                st.warning("실제 구현시 선택한 후보의 복용법과 주의사항을 안내하도록 연결!!")
+                st.warning("선택한 후보의 복용법과 주의사항 안내 기능은 추후 연결 예정입니다.")
 
 # 메인 실행
 show_header()
