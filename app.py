@@ -386,25 +386,19 @@ def show_success_screen():
     result = st.session_state.result
     medicine = result["medicine"]
 
-    left, right = st.columns([1, 1.3], gap="large")
+    left, right = st.columns([1, 1.5], gap="large")
 
     with left:
-        st.markdown(
-            """
-            <div class="section-card">
-                <div class="section-title">입력 이미지 미리보기</div>
-                <div class="section-desc">
-                    YOLOv8이 탐지한 약품 이미지를 확인합니다.
-                </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        st.subheader("입력 이미지 미리보기")
+        st.write("탐지된 약품 이미지를 확인합니다.")
 
-        st.image(
-            result["cropped_image"],
-            caption="탐지된 약품 영역",
-            use_container_width=True,
-        )
+        img_l, img_c, img_r = st.columns([0.1, 1.3, 0.1])
+        with img_c:
+            st.image(
+                result["cropped_image"],
+                caption="탐지된 약품 영역",
+                use_container_width=True,
+            )
 
         st.markdown(
             f"""
@@ -421,8 +415,6 @@ def show_success_screen():
             unsafe_allow_html=True,
         )
 
-        st.markdown("</div>", unsafe_allow_html=True)
-
     with right:
         confidence_percent = int(result["confidence"] * 100)
 
@@ -432,46 +424,28 @@ def show_success_screen():
             f"주의사항으로 {medicine['warning']}"
         )
 
-        st.markdown(
-            f"""
-            <div class="section-card">
-                <div class="section-title">분석 결과</div>
-                <div class="section-desc">
-                    OCR 결과와 약품 데이터베이스를 매칭한 최종 결과입니다.
-                </div>
+        st.subheader("분석 결과")
+        st.write("약품 이미지 분석을 통해 확인된 정보입니다.")
 
-                <div class="success-card">
-                    <div class="label">인식된 약품</div>
-                    <div class="big-value">{medicine["name_ko"]}</div>
-                    <p>{medicine["name_en"]} · 신뢰도 {confidence_percent}%</p>
-                </div>
+        st.success(f"인식된 약품: {medicine['name_ko']} / {medicine['name_en']}")
+        st.write(f"신뢰도: {confidence_percent}%")
 
-                <div class="result-card">
-                    <div class="label">복용법</div>
-                    <div class="value">{medicine["dosage"]}</div>
-                </div>
+        st.markdown("### 복용법")
+        st.info(medicine["dosage"])
 
-                <div class="result-card">
-                    <div class="label">주의사항</div>
-                    <div class="value">{medicine["warning"]}</div>
-                </div>
+        st.markdown("### 주의사항")
+        st.warning(medicine["warning"])
 
-                <div class="result-card">
-                    <div class="label">음성 안내 문장</div>
-                    <p>{guide_text}</p>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        st.markdown("### 음성 안내 문장")
+        st.write(guide_text)
 
-        st.info("현재 코드는 화면 구성용입니다. 실제 TTS는 팀원이 만든 음성 모듈과 연결하면 됩니다.")
+        st.caption("현재 코드는 화면 구성용입니다. 실제 TTS는 팀원이 만든 음성 모듈과 연결하면 됩니다.")
 
         col1, col2 = st.columns(2)
 
         with col1:
             if st.button("음성으로 다시 듣기", use_container_width=True):
-                st.success("음성 안내를 실행합니다. 실제 구현 시 TTS 함수와 연결하세요.")
+                st.success("음성 안내를 실행합니다.")
                 st.write(guide_text)
 
         with col2:
