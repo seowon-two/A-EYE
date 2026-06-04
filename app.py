@@ -142,6 +142,24 @@ st.markdown(
         padding-bottom: 2rem;
         max-width: 1000px;
     }
+
+    .tip-box-large {
+    background-color: #1E3554;
+    color: #9CC3FF;
+    padding: 18px 24px;
+    border-radius: 12px;
+    font-size: 18px;
+    line-height: 1.8;
+    font-weight: 500;
+    margin-top: 12px;
+    margin-bottom: 16px;
+    }
+
+    .tip-box-large ul {
+        margin: 0;
+        padding-left: 10px;
+    }
+
     </style>
     """,
     unsafe_allow_html=True,
@@ -241,13 +259,15 @@ def run_ai_pipeline(image):
     cropped_image = image
 
     # EasyOCR 결과라고 가정한 더미 텍스트
+    # 실패 상황 테스트시 ocr_confidence 값을 낮추면 됨 (ex. ocr_confidence = 0.45)
     dummy_ocr_text = "Ty1enol!!"
     ocr_confidence = 0.92
 
     cleaned_text, best, candidates = match_medicine(dummy_ocr_text)
 
-    # 실패 상황 테스트시 ocr_confidence 값을 낮추면 됨 (ex. ocr_confidence = 0.45)
+
     if not yolo_detected or ocr_confidence < 0.6:
+        # YOLO 탐지에 실패했거나 OCR 신뢰도가 기준값보다 낮으면 실패 결과를 반환
         return {
             "status": "fail",
             "reason": "OCR 신뢰도가 낮습니다.",
@@ -257,6 +277,7 @@ def run_ai_pipeline(image):
             "cropped_image": cropped_image,
         }
 
+    # OCR 신뢰도가 기준값 이상이면 성공 결과를 반환
     return {
         "status": "success",
         "ocr_text": dummy_ocr_text,
@@ -291,8 +312,7 @@ def show_header():
 def show_input_screen():
     st.subheader("약품 이미지 입력")
     st.write("카메라로 약품을 촬영하거나 이미지 파일을 업로드하세요.")
-
-    # 전체 입력 영역을 가운데 정렬
+    
     left_space, input_area, right_space = st.columns([0.3, 3.4, 0.3])
 
     with input_area:
@@ -403,12 +423,12 @@ def show_success_screen():
         st.markdown(
             f"""
             <div class="result-card">
-                <div class="label">OCR 원문</div>
+                <div class="label">인식된 글자</div>
                 <div class="value">{result["ocr_text"]}</div>
             </div>
 
             <div class="result-card">
-                <div class="label">정제된 문자열</div>
+                <div class="label">확인한 약품명</div>
                 <div class="value">{result["cleaned_text"]}</div>
             </div>
             """,
@@ -439,7 +459,7 @@ def show_success_screen():
         st.markdown("### 음성 안내 문장")
         st.write(guide_text)
 
-        st.caption("현재 코드는 화면 구성용입니다. 실제 TTS는 팀원이 만든 음성 모듈과 연결하면 됩니다.")
+        st.caption("현재 코드는 화면 구성용입니다. (TTS 음성 모듈과 연결 전)")
 
         col1, col2 = st.columns(2)
 
@@ -453,90 +473,60 @@ def show_success_screen():
                 reset_app()
                 st.rerun()
 
-# 상태 4. 인식 실패 / 복수 후보 화면
+# 4. 인식 실패 / 복수 후보 화면
 def show_fail_screen():
     result = st.session_state.result
 
-    left, right = st.columns([1, 1.3], gap="large")
+    left, right = st.columns([1, 1.5], gap="large")
 
     with left:
-        st.markdown(
-            """
-            <div class="section-card">
-                <div class="section-title">입력 이미지</div>
-                <div class="section-desc">
-                    인식이 불안정했던 이미지입니다.
-                </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        st.subheader("입력 이미지 미리보기")
+        st.write("인식이 불안정했던 이미지를 확인합니다.")
 
         if result and result.get("cropped_image") is not None:
-            st.image(
-                result["cropped_image"],
-                caption="인식 실패 이미지",
-                use_container_width=True,
-            )
+            img_l, img_c, img_r = st.columns([0.1, 1.3, 0.1])
 
+            with img_c:
+                st.image(
+                    result["cropped_image"],
+                    caption="인식 실패 이미지",
+                    use_container_width=True,
+                )
         st.markdown(
             """
-            <div class="tip">
-                재촬영 팁<br>
-                - 약품명이 화면 중앙에 오도록 촬영<br>
-                - 흔들리지 않게 촬영<br>
-                - 빛 반사 피하기<br>
-                - 약품 포장지의 글자가 잘 보이게 촬영
+            <div class="tip-box-large">
+                <ul>
+                    <li>약품명이 화면 중앙에 오게<br>해주세요.</li>
+                    <li>흔들리지 않게 촬영해주세요.</li>
+                    <li>빛 반사를 피해주세요.</li>
+                    <li>포장지의 글자가 잘 보이게<br>해주세요.</li>
+                </ul>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-        st.markdown("</div>", unsafe_allow_html=True)
-
     with right:
         confidence_percent = int(result["confidence"] * 100) if result else 0
 
-        st.markdown(
-            f"""
-            <div class="section-card">
-                <div class="section-title">인식 실패 또는 복수 후보</div>
-                <div class="section-desc">
-                    OCR 신뢰도가 낮거나 유사 약품이 여러 개 존재하는 경우입니다.
-                </div>
+        st.subheader("인식 실패 또는 복수 후보")
+        st.write("약품명이 선명하게 인식되지 않았습니다. 아래 후보를 확인하거나 다시 촬영해주세요.")
 
-                <div class="error-card">
-                    <div class="label">오류 원인</div>
-                    <div class="value">약품 인식 정확도가 낮습니다.</div>
-                    <p>현재 OCR 신뢰도: {confidence_percent}%</p>
-                </div>
+        st.error(f"약품 정보를 정확히 확인하지 못했습니다. 인식 정확도: {confidence_percent}%")
 
-                <div class="warning-card">
-                    <div class="label">안내</div>
-                    <div class="value">다시 촬영하거나 후보 약품을 확인해주세요.</div>
-                </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        st.error("다시 촬영하거나 아래 후보 약품을 확인해주세요.")
 
         if result and result.get("candidates"):
-            st.markdown("#### 유사 약품 후보")
+            st.markdown("### 유사 약품 후보")
 
-            for candidate in result["candidates"]:
-                info = candidate["info"]
-                score = int(candidate["score"] * 100)
+        for candidate in result["candidates"]:
+            info = candidate["info"]
+            score = int(candidate["score"] * 100)
 
-                st.markdown(
-                    f"""
-                    <div class="result-card">
-                        <div class="label">후보 약품</div>
-                        <div class="value">{info["name_ko"]} / {info["name_en"]}</div>
-                        <p>문자열 유사도: {score}%</p>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-        st.markdown("</div>", unsafe_allow_html=True)
+            st.warning(
+                f"후보 약품: {info['name_ko']} / {info['name_en']}\n\n"
+                f"문자열 유사도: {score}%"
+            )
 
         col1, col2 = st.columns(2)
 
@@ -545,9 +535,11 @@ def show_fail_screen():
                 reset_app()
                 st.rerun()
 
+        # TODO: 후보 약품 선택 시 해당 약품 정보를 최종 안내 화면으로 전달,
+        # Web Speech API 또는 TTS 모듈과 연결하여 복용법과 주의사항을 음성으로 출력
         with col2:
-            if st.button("후보 선택 후 안내", use_container_width=True):
-                st.warning("실제 구현 시 선택한 후보의 복용법과 주의사항을 안내하도록 연결하세요.")
+            if st.button("후보 확인하기", use_container_width=True):
+                st.warning("실제 구현시 선택한 후보의 복용법과 주의사항을 안내하도록 연결!!")
 
 # 메인 실행
 show_header()
