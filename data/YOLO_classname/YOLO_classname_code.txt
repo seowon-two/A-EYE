@@ -1,0 +1,31 @@
+# YOLOv12 모델 불러오기
+from ultralytics import YOLO
+
+# 학습된 모델 로드
+model = YOLO("model.pt")
+
+# 테스트 이미지 추론
+results = model("test_image.jpg")
+
+# 가장 높은 confidence 저장 변수
+best_conf = 0
+best_class = None
+
+# 객체 탐지 결과 확인
+for r in results:
+    for box in r.boxes:
+
+        # confidence 값 추출
+        conf = float(box.conf[0])
+
+        # 클래스 번호 추출
+        class_id = int(box.cls[0])
+
+        # 가장 높은 confidence 저장
+        if conf > best_conf:
+            best_conf = conf
+            best_class = model.names[class_id]
+
+# 최종 결과 출력
+print("class_name =", best_class)
+print("confidence =", best_conf)

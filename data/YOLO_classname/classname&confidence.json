@@ -1,0 +1,54 @@
+[
+    {
+        "class_name": "eyedrop-multi",
+        "confidence": 0.8913817405700684
+    },
+    {
+        "class_name": "bearse",
+        "confidence": 0.8952635526657104
+    },
+    {
+        "class_name": "eyedrop-single",
+        "confidence": 0.8314759731292725
+    },
+    {
+        "class_name": "ezen6",
+        "confidence": 0.8462425470352173
+    },
+    {
+        "class_name": "festal",
+        "confidence": 0.8828115463256836
+    },
+    {
+        "class_name": "fusidin",
+        "confidence": 0.8468292355537415
+    },
+    {
+        "class_name": "geborin",
+        "confidence": 0.2645685374736786
+    },
+    {
+        "class_name": "madecassol",
+        "confidence": 0.9090487360954285
+    },
+    {
+        "class_name": "pancol",
+        "confidence": 0.8458589315414429
+    },
+    {
+        "class_name": "tylenol",
+        "confidence": 0.9438591599464417
+    },
+    {
+        "class_name": "band",
+        "confidence": 0.9546821713447571
+    },
+    {
+        "class_name": "panpirin",
+        "confidence": 0.8088133931159973
+    },
+    {
+        "class_name": "patch",
+        "confidence": 0.9193594455718994
+    }
+]
