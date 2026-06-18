@@ -144,7 +144,7 @@ def run_ai_pipeline(image):
         return {
             "status": "fail",
             "reason": "약품을 인식하지 못했습니다.",
-            "confidence": 0,
+            "confidence": detection_result.get("confidence", 0),
             "medicine": None,
             "audio_path": None,
             "cropped_image": image,
@@ -158,7 +158,7 @@ def run_ai_pipeline(image):
         return {
             "status": "fail",
             "reason": "DB에서 약품 정보를 찾지 못했습니다.",
-            "confidence": 0,
+            "confidence": detection_result.get("confidence", 0),
             "medicine": None,
             "audio_path": None,
             "cropped_image": image,
@@ -174,7 +174,7 @@ def run_ai_pipeline(image):
         "medicine": medicine,
         "audio_path": audio_path,
         "cropped_image": image,
-        "confidence": 1.0,
+        "confidence": detection_result["confidence"],
     }
 
 
