@@ -1,6 +1,6 @@
 import time
 import streamlit as st
-from PIL import Image
+from PIL import Image, ImageOps
 import tempfile
 
 from src.model_connector import detect_medicine
@@ -225,6 +225,7 @@ def show_input_screen():
 
         if selected_image is not None:
             image = Image.open(selected_image)
+            image = ImageOps.exif_transpose(image)  # EXIF 회전 정보 적용
             st.session_state.uploaded_image = image
 
             st.image(
