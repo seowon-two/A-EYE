@@ -2,6 +2,8 @@ from ultralytics import YOLO
 import json
 from pathlib import Path
 import streamlit as st
+import csv
+from datetime import datetime
 
 # 프로젝트 루트 경로: A-EYE
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -108,3 +110,38 @@ def detect_medicine(image_path):
         "confidence": best_confidence,
         "medicine_info": None
     }
+
+LOG_PATH = BASE_DIR / "logs" / "detection_log.csv"
+
+def detect_medicine_with_logging(image_path, true_label):
+    """
+    평가용 함수. true_label(정답 클래스명)을 받아서
+    13개 모델 전체의 결과를 CSV에 기록한다.
+    실제 서비스(detect_medicine)에는 영향 없음.
+    """
+    models = load_models()
+    results_list = []
+
+    for class_name, model in models.items():
+        results = model(image_path)
+        if len(results[0].boxes) > 0:
+            confidence = float(results[0].boxes.conf.max())
+            results_list.append((class_name, confidence))
+
+    results_list.sort(key=lambda x: x[1], reverse=True)
+
+    LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    file_exists = LOG_PATH.exists()
+
+    with open(LOG_PATH, "a", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        if not file_exists:
+            writer.writerow(["timestamp", "image_path", "true_label", "rank", "pred_label", "confidence"])
+
+        if len(results_list) == 0:
+            writer.writerow([datetime.now().isoformat(), str(image_path), true_label, 0, None, 0.0])
+        else:
+            for rank, (label, conf) in enumerate(results_list, start=1):
+                writer.writerow([datetime.now().isoformat(), str(image_path), true_label, rank, label, conf])
+
+    return results_list
