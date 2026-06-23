@@ -83,9 +83,14 @@ def detect_medicine(image_path):
 
     best_class_name, best_confidence = results_list[0]
 
-    # 2위가 있으면 margin 계산, 없으면 margin 조건 생략
-    MARGIN_THRESHOLD = 0.06
+    # 클래스별 margin threshold (patch는 다른 클래스와 헷갈림이 심해 더 낮은 기준 적용)
+    DEFAULT_MARGIN_THRESHOLD = 0.06
+    CLASS_MARGIN_OVERRIDES = {
+        "patch": 0.04,
+    }
+    margin_threshold = CLASS_MARGIN_OVERRIDES.get(best_class_name, DEFAULT_MARGIN_THRESHOLD)
 
+    # 2위가 있으면 margin 계산, 없으면 margin 조건 생략
     if len(results_list) >= 2:
         second_class_name, second_confidence = results_list[1]
         margin = best_confidence - second_confidence
@@ -93,7 +98,7 @@ def detect_medicine(image_path):
         second_class_name, second_confidence = None, 0
         margin = 1.0  # 경쟁자가 없으니 margin 통과시킴
 
-    detected = (best_confidence >= 0.80) and (margin >= MARGIN_THRESHOLD)
+    detected = (best_confidence >= 0.80) and (margin >= margin_threshold)
 
     if detected:
         info = get_medicine_info(best_class_name)
