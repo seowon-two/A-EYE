@@ -5,13 +5,10 @@ import streamlit as st
 import csv
 from datetime import datetime
 
-# 프로젝트 루트 경로: A-EYE
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# models 폴더 경로
 MODEL_DIR = BASE_DIR / "models"
 
-# DB 경로
 DB_PATH = BASE_DIR / "DB" / "medicine_db.json"
 
 # 모든 YOLO 모델 로드
@@ -30,6 +27,42 @@ MODEL_PATHS = {
     "patch": MODEL_DIR / "patch_best.pt",
     "tylenol": MODEL_DIR / "tylenol_best.pt",
 }
+# 클래스별 confidence threshold (분석 결과 기반, 명시 안 된 클래스는 DEFAULT 사용)
+CONFIDENCE_THRESHOLDS = {
+    "band": 0.871,
+    "bearse": 0.817,
+    "eyedrop-multi": 0.862,
+    "eyedrop-single": 0.72,
+    "ezen6": 0.830,
+    "festal": 0.872,
+    "fusidin": 0.777,
+    "geborin": 0.777,
+    "madecassol": 0.732,
+    "pancol": 0.718,
+    "panpirin": 0.80,
+    "patch": 0.727,
+    "tylenol": 0.892,
+}
+
+# 클래스별 margin threshold (1위-2위 confidence 차이 기준)
+MARGIN_THRESHOLDS = {
+    "band": 0.10,
+    "bearse": 0.04,
+    "eyedrop-multi": 0.15,
+    "eyedrop-single": 0.20,
+    "ezen6": 0.01,
+    "festal": 0.12,
+    "fusidin": 0.12,
+    "geborin": 0.15,
+    "madecassol": 0.08,
+    "pancol": 0.15,
+    "panpirin": 0.18,
+    "patch": 0.005,
+    "tylenol": 0.08,
+}
+
+DEFAULT_CONFIDENCE_THRESHOLD = 0.80
+DEFAULT_MARGIN_THRESHOLD = 0.06
 
 # YOLO 모델 캐싱 (최초 1회 로드 후 재사용)
 @st.cache_resource
@@ -80,26 +113,22 @@ def detect_medicine(image_path):
     # confidence 높은 순으로 정렬
     results_list.sort(key=lambda x: x[1], reverse=True)
     print("DEBUG results_list:", results_list)
-
+    
     best_class_name, best_confidence = results_list[0]
 
-    # 클래스별 margin threshold (patch는 다른 클래스와 헷갈림이 심해 더 낮은 기준 적용)
-    DEFAULT_MARGIN_THRESHOLD = 0.06
-    CLASS_MARGIN_OVERRIDES = {
-        "patch": 0.04,
-    }
-    margin_threshold = CLASS_MARGIN_OVERRIDES.get(best_class_name, DEFAULT_MARGIN_THRESHOLD)
-
-    # 2위가 있으면 margin 계산, 없으면 margin 조건 생략
     if len(results_list) >= 2:
         second_class_name, second_confidence = results_list[1]
         margin = best_confidence - second_confidence
     else:
         second_class_name, second_confidence = None, 0
-        margin = 1.0  # 경쟁자가 없으니 margin 통과시킴
+        margin = 1.0
 
-    detected = (best_confidence >= 0.80) and (margin >= margin_threshold)
+    # 클래스별 threshold 적용 
+    conf_threshold = CONFIDENCE_THRESHOLDS.get(best_class_name, DEFAULT_CONFIDENCE_THRESHOLD)
+    margin_threshold = MARGIN_THRESHOLDS.get(best_class_name, DEFAULT_MARGIN_THRESHOLD)
 
+    detected = (best_confidence >= conf_threshold) and (margin >= margin_threshold)
+    
     if detected:
         info = get_medicine_info(best_class_name)
         return {
